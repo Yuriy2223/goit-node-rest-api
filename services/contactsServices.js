@@ -1,7 +1,6 @@
 import fs from "fs/promises";
 import path from "path";
 
-
 const contactsPath = path.resolve("db", "contacts.json");
 
 export async function listContacts() {
@@ -26,7 +25,7 @@ export async function removeContact(contactId) {
   return null;
 }
 
-export async function addContact(name, email, phone) {
+export async function addContact({ name, email, phone }) {
   const contacts = await listContacts();
   const newContact = { id: contacts.length + 1, name, email, phone };
   contacts.push(newContact);
