@@ -15,14 +15,14 @@ export async function getContactById(contactId, owner) {
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw new HttpError(400, "Invalid ID");
   }
-  return await Contact.findById({ _id: contactId, owner });
+  return await Contact.findOne({ _id: contactId, owner });
 }
 
 export async function removeContact(contactId, owner) {
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw new HttpError(400, "Invalid ID");
   }
-  const result = await Contact.deleteOne({
+  const result = await Contact.findOneAndDelete({
     _id: contactId,
     owner,
   });
@@ -49,10 +49,10 @@ export async function addContact({
 }
 
 export async function updateContact(contactId, owner, body) {
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw new HttpError(400, "Invalid ID");
   }
-  const contact = await Contact.findByIdAndUpdate(
+  const contact = await Contact.findOneAndUpdate(
     { _id: contactId, owner },
     body,
     {
@@ -69,7 +69,7 @@ export async function updateStatusContact(contactId, owner, body) {
   if (!mongoose.Types.ObjectId.isValid(contactId)) {
     throw new HttpError(400, "Invalid ID");
   }
-  const contact = await Contact.findByIdAndUpdate(
+  const contact = await Contact.findOneAndUpdate(
     { _id: contactId, owner },
     { favorite: body.favorite },
     { new: true }
