@@ -7,7 +7,13 @@ import {
 
 export const getAllContacts = async (req, res, next) => {
   try {
-    const contacts = await contactsService.listContacts();
+    const contacts = await contactsService.listContacts(
+      // req.params.id,
+      req.user.id,
+      parseInt(req.query.page || 1),
+      parseInt(req.query.limit || 20),
+      req.query.favorite
+    );
     res.status(200).json(contacts);
   } catch (error) {
     next(error);
@@ -16,7 +22,10 @@ export const getAllContacts = async (req, res, next) => {
 
 export const getOneContact = async (req, res, next) => {
   try {
-    const contact = await contactsService.getContactById(req.params.id);
+    const contact = await contactsService.getContactById(
+      req.params.id,
+      req.user.id
+    );
     if (!contact) {
       throw new HttpError(404, "Not found");
     }
@@ -28,7 +37,10 @@ export const getOneContact = async (req, res, next) => {
 
 export const deleteContact = async (req, res, next) => {
   try {
-    const contact = await contactsService.removeContact(req.params.id);
+    const contact = await contactsService.removeContact(
+      req.params.id,
+      req.user.id
+    );
     if (!contact) {
       throw new HttpError(404, "Not found");
     }
@@ -44,7 +56,12 @@ export const createContact = async (req, res, next) => {
     if (error) {
       throw new HttpError(400, error.message);
     }
-    const contact = await contactsService.addContact(req.body);
+    const contact = await contactsService.addContact({
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+      owner: req.user.id,
+    });
     res.status(201).json(contact);
   } catch (error) {
     next(error);
@@ -62,6 +79,7 @@ export const updateContact = async (req, res, next) => {
     }
     const contact = await contactsService.updateContact(
       req.params.id,
+      req.user.id,
       req.body
     );
     if (!contact) {
@@ -83,6 +101,7 @@ export const updateStatusContact = async (req, res, next) => {
     }
     const contact = await contactsService.updateStatusContact(
       req.params.id,
+      req.user.id,
       req.body
     );
     if (!contact) {

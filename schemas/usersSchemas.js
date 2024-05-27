@@ -1,26 +1,31 @@
-import mongoose from 'mongoose';
+import Joi from "joi";
 
-const userSchema = new mongoose.Schema({
-  password: {
-    type: String,
-    required: [true, 'Password is required'],
-  },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-  },
-  subscription: {
-    type: String,
-    enum: ["starter", "pro", "business"],
-    default: "starter"
-  },
-  token: {
-    type: String,
-    default: null,
-  },
+export const registerSchema = Joi.object({
+  email: Joi.string()
+    .email()
+    .required()
+    .error(() => new Error("Email and password are required")),
+  password: Joi.string()
+    .min(4)
+    .max(30)
+    .required()
+    .error(() => new Error("Email and password are required")),
+  subscription: Joi.string(),
+  token: Joi.string(),
 });
 
-const User = mongoose.model('User', userSchema);
+export const loginSchema = Joi.object({
+  email: Joi.string()
+    .email()
+    .required()
+    .error(() => new Error("Enter your email and password")),
+  password: Joi.string()
+    .min(4)
+    .max(30)
+    .required()
+    .error(() => new Error("Enter your email and password")),
+});
 
-export default User;
+export const subscriptionSchema = Joi.object({
+  subscription: Joi.string().valid("starter", "pro", "business").required(),
+});

@@ -1,13 +1,32 @@
-import express from 'express';
-import * as usersControllers from '../controllers/usersControllers.js';
-import authMiddleware from '../helpers/authMiddleware.js';
+import express from "express";
+import validateBody from "../helpers/validateBody.js";
+import * as usersControllers from "../controllers/usersControllers.js";
+import auth from "../helpers/auth.js";
+import {
+  registerSchema,
+  loginSchema,
+  subscriptionSchema,
+} from "../schemas/usersSchemas.js";
 
 const router = express.Router();
 
-router.post('/register', usersControllers.register);
-router.post('/login', usersControllers.login);
-router.post('/logout', authMiddleware, usersControllers.logout);
-router.get('/current', authMiddleware, usersControllers.getCurrentUser);
-router.patch('/', authMiddleware, usersControllers.updateSubscription);
+router.post(
+  "/register",
+  validateBody(registerSchema),
+  usersControllers.register
+);
+
+router.post("/login", validateBody(loginSchema), usersControllers.login);
+
+router.post("/logout", auth, usersControllers.logout);
+
+router.get("/current", auth, usersControllers.current);
+
+router.patch(
+  "/",
+  auth,
+  validateBody(subscriptionSchema),
+  usersControllers.updateSubscription
+);
 
 export default router;

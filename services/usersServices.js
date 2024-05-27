@@ -1,60 +1,25 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
-export const register = async (email, password) => {
-  const existingUser = await User.findOne({ email });
+export async function registerUser(email) {
+  return User.findOne({ email });
+}
 
-  if (existingUser) {
-    return null;
-  }
+export async function createUser(email, passwordHash) {
+  return User.create({ email, password: passwordHash });
+}
 
-  const hashedPassword = await bcrypt.hash(password, 12);
-  const result = await User.create({ email, password: hashedPassword });
+export async function tokenUser(id, token) {
+  return User.findByIdAndUpdate({ _id: id }, token, {
+    new: true,
+  });
+}
 
-  return result;
-};
+export async function findUser(_id) {
+  return User.findById({ _id });
+}
 
-export const login = async (email, password) => {
-  const existingUser = await User.findOne({ email });
-
-  if (!existingUser) {
-    return null;
-  }
-
-  const isPasswordCorrect = await bcrypt.compare(
-    password,
-    existingUser.password
-  );
-
-  if (!isPasswordCorrect) {
-    return null;
-  }
-
-  const token = jwt.sign(
-    { email: existingUser.email, id: existingUser._id },
-    "test",
-    { expiresIn: "1h" }
-  );
-
-  existingUser.token = token;
-  await existingUser.save();
-
-  return { user: existingUser, token };
-};
-
-export const logout = async (userId) => {
-  const user = await User.findById(userId);
-  user.token = null;
-  await user.save();
-};
-
-export const getCurrentUser = async (userId) => {
-  return await User.findById(userId);
-};
-
-export const updateSubscription = async (userId, subscription) => {
-  const user = await User.findById(userId);
-  user.subscription = subscription;
-  return await user.save();
-};
+export async function subscriptionUser(id, body) {
+  return User.findByIdAndUpdate({ _id: id }, body, {
+    new: true,
+  });
+}
