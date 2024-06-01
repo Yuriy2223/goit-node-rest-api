@@ -8,7 +8,6 @@ import {
 export const getAllContacts = async (req, res, next) => {
   try {
     const contacts = await contactsService.listContacts(
-      // req.params.id,
       req.user.id,
       parseInt(req.query.page || 1),
       parseInt(req.query.limit || 20),

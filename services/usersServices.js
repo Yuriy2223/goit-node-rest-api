@@ -23,3 +23,11 @@ export async function subscriptionUser(id, body) {
     new: true,
   });
 }
+
+export async function updateAvatar(id, avatarURL) {
+  return User.findByIdAndUpdate(
+    { _id: id },
+    { avatarURL },
+    { new: true }
+  );
+}
