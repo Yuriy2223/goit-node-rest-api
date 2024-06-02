@@ -14,7 +14,12 @@ export const register = async (req, res, next) => {
       return next(new HttpError(409, "Email in use"));
     }
     const passwordHash = await bcrypt.hash(password, 10);
-    const newUser = await usersServices.createUser(email, passwordHash);
+    const avatarURL = gravatar.url(email, { s: "200", d: "retro" });
+    const newUser = await usersServices.createUser(
+      email,
+      passwordHash,
+      avatarURL
+    );
     res.status(201).json({
       user: {
         email: newUser.email,
