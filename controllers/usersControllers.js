@@ -111,29 +111,20 @@ export const updateSubscription = async (req, res, next) => {
 export const changeAvatar = async (req, res, next) => {
   try {
     if (!req.file) {
-      return next(new HttpError(400));
+      return next(new HttpError(400, "File not found"));
     }
     const newPath = path.resolve("public", "avatars", req.file.filename);
     const avatarURL = path.join("/avatars", req.file.filename);
-    Jimp.read(req.file.path)
-      .then((file) => {
-        return file.resize(250, 250).quality(60).write(newPath);
-      })
-      .catch((error) => {
-        console.error(error);
-      });
+    const file = await Jimp.read(req.file.path);
+    await file.resize(250, 250).quality(60).writeAsync(newPath);
     await fs.rename(req.file.path, newPath);
-    try {
-      const user = await usersServices.updateAvatar(req.user.id, avatarURL);
-      if (user) {
-        res.status(200).json({
-          avatarURL: user.avatarURL,
-        });
-      } else {
-        next(new HttpError(404));
-      }
-    } catch (error) {
-      next(error);
+    const user = await usersServices.updateAvatar(req.user.id, avatarURL);
+    if (user) {
+      res.status(200).json({
+        avatarURL: user.avatarURL,
+      });
+    } else {
+      next(new HttpError(404));
     }
   } catch (error) {
     next(error);
