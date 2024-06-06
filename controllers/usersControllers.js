@@ -5,6 +5,9 @@ import jwt from "jsonwebtoken";
 import * as fs from "node:fs/promises";
 import path from "node:path";
 import Jimp from "jimp";
+import gravatar from "gravatar";
+import crypto from "node:crypto";
+import mailtrap from "../helpers/mailtrap.js"; /** */
 
 export const register = async (req, res, next) => {
   try {
@@ -20,6 +23,16 @@ export const register = async (req, res, next) => {
       passwordHash,
       avatarURL
     );
+    /** */
+    const verificationToken = crypto.randomUUID();
+    mailtrap.sendMail({
+      to: email,
+      from: "yuriy.shukan@gmail.com",
+      subject: "Welcome to Contacts book",
+      html: `To confirm you email please click on <a href="http://localhost:3000/users/verify/${verificationToken}">link</a>`,
+      text: `To confirm you email please open the link http://localhost:3000/users/verify/${verificationToken}`,
+    });
+
     res.status(201).json({
       user: {
         email: newUser.email,
@@ -129,4 +142,55 @@ export const changeAvatar = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+/** =======================================*/
+export const verifyEmail = async (req, res, next) => {
+  const { verificationToken } = req.params;
+  const user = await usersServices.findUserByVerificationToken(
+    verificationToken
+  );
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+  try {
+    await usersServices.updateUser(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+    res.json({
+      message: "Verification successful",
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
+
+export const resendVerifyEmail = async (req, res, next) => {
+  const { email } = req.body;
+  const user = await usersServices.findUser(email);
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  if (user.verify) {
+    return res.status(400).json({
+      message: "Verification has already been passed",
+    });
+  }
+
+  const verifyEmailData = {
+    to: user.email,
+    subject: "Verify email",
+    html: `<a target="_blank" href="${BASE_URI}/api/users/verify/${user.verificationToken}">Click verify email</a>`,
+  };
+
+  await sendEmail(verifyEmailData);
+
+  res.json({ message: "Verification email sent" });
 };
