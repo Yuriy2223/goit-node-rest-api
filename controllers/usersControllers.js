@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import * as fs from "node:fs/promises";
 import path from "node:path";
+import gravatar from "gravatar";
 import Jimp from "jimp";
 
 export const register = async (req, res, next) => {
