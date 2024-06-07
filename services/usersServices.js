@@ -7,7 +7,7 @@ export async function registerUser(email) {
 export async function createUser(
   email,
   passwordHash,
-  avatarURL,
+  // avatarURL,
   verificationToken
 ) {
   return User.create({

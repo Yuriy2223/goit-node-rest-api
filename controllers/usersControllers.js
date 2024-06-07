@@ -7,7 +7,6 @@ import path from "node:path";
 import Jimp from "jimp";
 import gravatar from "gravatar";
 import crypto from "node:crypto";
-
 import mailtrap from "../helpers/mailtrap.js"; 
 
 export const register = async (req, res, next) => {
