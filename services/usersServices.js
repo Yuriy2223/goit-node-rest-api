@@ -4,8 +4,18 @@ export async function registerUser(email) {
   return User.findOne({ email });
 }
 
-export async function createUser(email, passwordHash) {
-  return User.create({ email, password: passwordHash });
+export async function createUser(
+  email,
+  passwordHash,
+  avatarURL,
+  verificationToken
+) {
+  return User.create({
+    email,
+    password: passwordHash,
+    avatarURL,
+    verificationToken,
+  });
 }
 
 export async function tokenUser(id, token) {
@@ -25,9 +35,13 @@ export async function subscriptionUser(id, body) {
 }
 
 export async function updateAvatar(id, avatarURL) {
-  return User.findByIdAndUpdate(
-    { _id: id },
-    { avatarURL },
-    { new: true }
-  );
+  return User.findByIdAndUpdate({ _id: id }, { avatarURL }, { new: true });
+}
+
+export async function findUserByToken(verificationToken) {
+  return User.findOne({ verificationToken });
+}
+
+export async function setVerificationToken(Id, verificationToken) {
+  return User.findByIdAndUpdate(Id, { verificationToken });
 }

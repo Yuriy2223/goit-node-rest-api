@@ -15,13 +15,3 @@ function sendMail(message) {
 }
 
 export default { sendMail };
-
-// const messageToTheUser = {
-//   to: ["yuriy.shukan@gmail.com"],
-//   from: "yuriy@gmail.com",
-//   subject: "11111111111111111111111",
-//   html: `<h1 style="color: red;">User verification by link</h1>`,
-//   text: `Click my`,
-// };
-
-// transport.sendMail(messageToTheUser).then(console.log).catch(console.error);

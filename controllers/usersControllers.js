@@ -7,7 +7,8 @@ import path from "node:path";
 import Jimp from "jimp";
 import gravatar from "gravatar";
 import crypto from "node:crypto";
-import mailtrap from "../helpers/mailtrap.js"; /** */
+
+import mailtrap from "../helpers/mailtrap.js"; 
 
 export const register = async (req, res, next) => {
   try {
@@ -18,20 +19,22 @@ export const register = async (req, res, next) => {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     const avatarURL = gravatar.url(email, { s: "200", d: "retro" });
-    const newUser = await usersServices.createUser(
-      email,
-      passwordHash,
-      avatarURL
-    );
-    /** */
+
     const verificationToken = crypto.randomUUID();
     mailtrap.sendMail({
       to: email,
       from: "yuriy.shukan@gmail.com",
-      subject: "Welcome to Contacts book",
+      subject: "Welcome to Contacts",
       html: `To confirm you email please click on <a href="http://localhost:3000/users/verify/${verificationToken}">link</a>`,
       text: `To confirm you email please open the link http://localhost:3000/users/verify/${verificationToken}`,
     });
+
+    const newUser = await usersServices.createUser(
+      email,
+      passwordHash,
+      avatarURL,
+      verificationToken
+    );
 
     res.status(201).json({
       user: {
@@ -39,6 +42,23 @@ export const register = async (req, res, next) => {
         subscription: newUser.subscription,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verificationEmail = async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+    const user = await usersServices.findUserByToken(verificationToken);
+    if (!user) {
+      return next(new HttpError(404, "User not found"));
+    }
+    await usersServices.tokenUser(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+    res.status(200).json({ message: "Verification successfully" });
   } catch (error) {
     next(error);
   }
@@ -54,6 +74,9 @@ export const login = async (req, res, next) => {
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (isPasswordCorrect === false) {
       return next(new HttpError(401, "Email or password is wrong"));
+    }
+    if (!user.verify) {
+      return next(new HttpError(401, "Email not verified"));
     }
     const token = jwt.sign({ id: user._id }, process.env.JWT_KEY, {
       expiresIn: "1h",
@@ -144,53 +167,32 @@ export const changeAvatar = async (req, res, next) => {
   }
 };
 
-/** =======================================*/
-export const verifyEmail = async (req, res, next) => {
-  const { verificationToken } = req.params;
-  const user = await usersServices.findUserByVerificationToken(
-    verificationToken
-  );
-  if (!user) {
-    return res.status(404).json({
-      message: "User not found",
-    });
-  }
+export const resendVerificationEmail = async (req, res, next) => {
   try {
-    await usersServices.updateUser(user._id, {
-      verify: true,
-      verificationToken: null,
+    const { email } = req.body;
+    const user = await usersServices.findUserByEmail(email);
+    if (!user) {
+      return next(new HttpError(404, "User not found"));
+    }
+    if (user.verify) {
+      return res
+        .status(400)
+        .json({ message: "Verification has already been passed" });
+    }
+    const verificationToken = crypto.randomUUID();
+    await usersServices.setVerificationToken(
+      user.email,
+      user.verificationToken
+    );
+    mailtrap.sendMail({
+      to: email,
+      from: "yuriy.shukan@gmail.com",
+      subject: "Welcome to Contacts",
+      html: `To confirm you email please click on <a href="http://localhost:3000/users/verify/${verificationToken}">link</a>`,
+      text: `To confirm you email please open the link http://localhost:3000/users/verify/${verificationToken}`,
     });
-    res.json({
-      message: "Verification successful",
-    });
+    res.status(200).json({ message: "Verification email sent" });
   } catch (error) {
-    console.error(error);
     next(error);
   }
-};
-
-export const resendVerifyEmail = async (req, res, next) => {
-  const { email } = req.body;
-  const user = await usersServices.findUser(email);
-  if (!user) {
-    return res.status(404).json({
-      message: "User not found",
-    });
-  }
-
-  if (user.verify) {
-    return res.status(400).json({
-      message: "Verification has already been passed",
-    });
-  }
-
-  const verifyEmailData = {
-    to: user.email,
-    subject: "Verify email",
-    html: `<a target="_blank" href="${BASE_URI}/api/users/verify/${user.verificationToken}">Click verify email</a>`,
-  };
-
-  await sendEmail(verifyEmailData);
-
-  res.json({ message: "Verification email sent" });
 };
